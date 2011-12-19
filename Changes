@@ -131,3 +131,10 @@ Revision history for Perl extension Filter::Simple
     - Port changes from core: Whitespace fix that is significant for
       POD correctness.
 
+0.88    Mon Dec 19 18:26:00 CET 2011
+
+    - [perl #92436] Make Filter::Simple match variables better
+      (Father Chrysostomos)
+
+    - [perl #92436] Filter::Simple can’t find end of POD
+      (Father Chrysostomos)
