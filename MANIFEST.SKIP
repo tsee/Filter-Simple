@@ -1,5 +1,8 @@
 ^diff_to_blead\.pl$
+\.git/
+\.gitignore$
 
+\b(?:MY)?META\.(?:json|yml)$
 # Default section:
 # Avoid version control files.
 \bRCS\b
