@@ -7,7 +7,7 @@ SYNOPSIS
          package MyFilter;
 
          use Filter::Simple;
-     
+
          FILTER { ... };
 
          # or just:
@@ -74,7 +74,7 @@ DESCRIPTION
     if any):
 
         package BANG;
- 
+
         use Filter::Util::Call ;
 
         sub import {
@@ -127,7 +127,7 @@ DESCRIPTION
 
         package BANG;
         use Filter::Simple;
-    
+
         FILTER {
             s/BANG\s+BANG/die 'BANG' if \$BANG/g;
         };
@@ -170,7 +170,7 @@ DESCRIPTION
 
         package BANG;
         use Filter::Simple;
-    
+
         FILTER {
             s/BANG\s+BANG/die 'BANG' if \$BANG/g;
         }
@@ -187,7 +187,7 @@ DESCRIPTION
 
         package BANG;
         use Filter::Simple;
-    
+
         FILTER {
             s/BANG\s+BANG/die 'BANG' if \$BANG/g;
         }
@@ -459,9 +459,9 @@ DESCRIPTION
     made parametric:
 
         package BANG;
- 
+
         use Filter::Simple;
-    
+
         FILTER {
             my ($die_msg, $var_name) = @_;
             s/BANG\s+BANG/die '$die_msg' if \${$var_name}/g;
@@ -494,7 +494,7 @@ CONTACT
     Damian Conway <damian@conway.org>.
 
 COPYRIGHT AND LICENSE
-        Copyright (c) 2000-2008, Damian Conway. All Rights Reserved.
+        Copyright (c) 2000-2014, Damian Conway. All Rights Reserved.
         This module is free software. It may be used, redistributed
         and/or modified under the same terms as Perl itself.
 

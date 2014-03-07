@@ -138,3 +138,11 @@ Revision history for Perl extension Filter::Simple
 
     - [perl #92436] Filter::Simple can’t find end of POD
       (Father Chrysostomos)
+
+0.91    Fri Mar  7 08:30:00 CET 2014
+
+    - Various small documentation fixes.
+
+    - Swap out base.pm use for parent.pm.
+
+
