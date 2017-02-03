@@ -28,6 +28,7 @@ my $exql = sub {
 };
 
 my $ncws = qr/\s+/;
+my $nl = qr/(?:\r\n?|\n)/;
 my $comment = qr/(?<![\$\@%])#.*/;
 my $ws = qr/(?:$ncws|$comment)+/;
 my $id = qr/\b(?!([ysm]|q[rqxw]?|tr)\b)\w+/;
@@ -53,15 +54,15 @@ my $variable = qr{
    }x;
 
 my %extractor_for = (
-    quotelike  => [ $ws,  $variable, $id, { MATCH  => \&extract_quotelike } ],
+    quotelike  => [ $ws,  $variable, $id, { MATCH  => \&extract_quotelike } ], # here we need to extract here documents better!
     regex      => [ $ws,  $pod_or_DATA, $id, $exql           ],
     string     => [ $ws,  $pod_or_DATA, $id, $exql           ],
     code       => [ $ws, { DONT_MATCH => $pod_or_DATA }, $variable,
-                    $id, { DONT_MATCH => \&extract_quotelike }   ],
+                    $id, { DONT_MATCH => \&extract_quotelike }   ], # here we need to extract here documents better!
     code_no_comments
                => [ { DONT_MATCH => $comment },
                     $ncws, { DONT_MATCH => $pod_or_DATA }, $variable,
-                    $id, { DONT_MATCH => \&extract_quotelike }   ],
+                    $id, { DONT_MATCH => \&extract_quotelike }   ], # here we need to extract here documents better!
     executable => [ $ws, { DONT_MATCH => $pod_or_DATA }      ],
     executable_no_comments
                => [ { DONT_MATCH => $comment },
@@ -71,11 +72,18 @@ my %extractor_for = (
 
 my %selector_for = (
     all   => sub { my ($t)=@_; sub{ $_=$$_; $t->(@_); $_} },
-    executable=> sub { my ($t)=@_; sub{ref() ? $_=$$_ : $t->(@_); $_} }, 
-    quotelike => sub { my ($t)=@_; sub{ref() && do{$_=$$_; $t->(@_)}; $_} },
+    executable=> sub { my ($t)=@_; sub{ref() ? $_=$$_ : $t->(@_); $_} },
+    quotelike => sub { my ($t)=@_; sub{ref() && do{$_=$$_; $t->(@_)};
+                                       # Here, transform here documents back
+                                       # depending on whether they had content
+                                       # coming after them or not
+                                       # This might break other stuff
+                                       # that relies on that transform
+                                       warn "Returning [[$_]]";
+                                       $_} },
     regex     => sub { my ($t)=@_;
                sub{ref() or return $_;
-                   my ($ql,undef,$pre,$op,$ld,$pat) = @$_;
+                   my ($ql,$rest_of_line,$pre,$op,$ld,$pat) = @$_;
                    return $_->[0] unless $op =~ /^(qr|m|s)/
                          || !$op && ($ld eq '/' || $ld eq '?');
                    $_ = $pat;
@@ -106,27 +114,87 @@ my %selector_for = (
               },
 );
 
-
 sub gen_std_filter_for {
     my ($type, $transform) = @_;
     return sub {
         my $instr;
-        local @components;
+        local @components; # See documentation, this is a global variable
 		for (extract_multiple($_,$extractor_for{$type})) {
             if (ref())     { push @components, $_; $instr=0 }
-            elsif ($instr) { $components[-1] .= $_ }
+            elsif ($instr) { $components[-1] .= $_; }
             else           { push @components, $_; $instr=1 }
         }
+
         if ($type =~ /^code/) {
             my $count = 0;
-            local $placeholder = qr/\Q$;\E(.{4})\Q$;\E/s;
-            my $extractor =      qr/\Q$;\E(.{4})\Q$;\E/s;
+            local $placeholder   = qr/\Q$;\E(.{4})\Q$;\E/s; # see documentation
+            my $extractor = $placeholder;
+            my $extractor_nc =     qr/\Q$;\E(?:.{4})\Q$;\E/s;
             $_ = join "",
                   map { ref $_ ? $;.pack('N',$count++).$; : $_ }
                       @components;
             @components = grep { ref $_ } @components;
             $transform->(@_);
-            s/$extractor/${$components[unpack('N',$1)]}/g;
+
+            my @res;
+
+            # The approach is as follows:
+            # Since we have eliminated all (multiline) strings and comments
+            # and converted them to strings that match /$;....$;/,
+            # we can do our replacement line-by-line, appending here documents
+            # below the line by pushing their output onto @res as well
+
+            # We split up each line into non-string and string parts and then
+            # rebuild the target string anew, replacing all placeholders
+            # within it. If we encounter a here document, finish the current
+            # line and append the here document immediately as the next line.
+            # If we encounter any other quotelike, replace it inline and then
+            # stash away anything after the newline for later reassembly.
+            # This handles these cases:
+                # foo(<<EOM,q[
+                # EOM
+                # single-quoted]);
+            # and
+                # foo(q[
+                # single-quoted],<<EOM);
+                # EOM
+            my @following_lines;
+            my $whole_line = qr/((?:[^$;\r\n]+|$;....$;)*$nl)/s;
+            @res = map {
+                       if( ! defined ) {
+                           ''
+                       } elsif( /$placeholder/ ) {
+                           s{$placeholder}{
+                               my $str = ${$components[unpack('N',$1)]};
+                               if( $str =~ s/^(<<[^\r\n]+)$nl// ) {
+                                   # Split the here document into the header
+                                   # and the body
+                                   push @following_lines, $str;
+                                   $str = $1;
+
+                               } elsif( @following_lines and $str =~ s/^([^\n\r]*$nl)// ) {
+                                   # Here we have a multiline string being
+                                   # replaced for the placeholder, so we need to
+                                   # rebuild it respecting potential preceding
+                                   # here documents
+                                   push @following_lines, $str;
+                                   $str = $1;
+                                   # Just purge onto the end:
+                                   $str = $1 . join "", (splice( @following_lines, 0 ));
+                               }
+                               $str
+                           }ge;
+                           # must have been a newline, so purge the
+                           # accumulated output:
+                           ($_,splice(@following_lines));
+                       } else {
+                           # Plain string replacement
+                           $_
+                       };
+                   } /$whole_line/g;
+
+
+            $_ = join "", @res;
         }
         else {
             my $selector = $selector_for{$type}->($transform);
@@ -274,7 +342,7 @@ Filter::Simple - Simplified source filtering
 =head2 The Problem
 
 Source filtering is an immensely powerful feature of recent versions of Perl.
-It allows one to extend the language itself (e.g. the Switch module), to 
+It allows one to extend the language itself (e.g. the Switch module), to
 simplify the language (e.g. Language::Pythonesque), or to completely recast the
 language (e.g. Lingua::Romana::Perligata). Effectively, it allows one to use
 the full power of Perl as its own, recursively applied, macro language.
@@ -584,13 +652,13 @@ C<&Text::Balanced::extract_quotelike>).
 
 =item C<"string">
 
-Filters only the string literal parts of a Perl quotelike (i.e. the 
+Filters only the string literal parts of a Perl quotelike (i.e. the
 contents of a string literal, either half of a C<tr///>, the second
 half of an C<s///>).
 
 =item C<"regex">
 
-Filters only the pattern literal parts of a Perl quotelike (i.e. the 
+Filters only the pattern literal parts of a Perl quotelike (i.e. the
 contents of a C<qr//> or an C<m//>, the first half of an C<s///>).
 
 =item C<"all">
@@ -604,7 +672,7 @@ the component filters is called repeatedly, once for each component
 found in the source code.
 
 Note that you can also apply two or more of the same type of filter in
-a single C<FILTER_ONLY>. For example, here's a simple 
+a single C<FILTER_ONLY>. For example, here's a simple
 macro-preprocessor that is only applied within regexes,
 with a final debugging pass that prints the resulting source code:
 
@@ -757,7 +825,7 @@ subroutines -- C<import> and C<unimport> -- which take care of all the
 nasty details.
 
 In addition, the generated C<import> subroutine passes its own argument
-list to the filtering subroutine, so the BANG.pm filter could easily 
+list to the filtering subroutine, so the BANG.pm filter could easily
 be made parametric:
 
     package BANG;
