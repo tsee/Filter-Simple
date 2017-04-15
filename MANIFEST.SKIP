@@ -1,6 +1,7 @@
 ^diff_to_blead\.pl$
 \.git/
 \.gitignore$
+\.travis.yml$
 
 \b(?:MY)?META\.(?:json|yml)$
 # Default section:
