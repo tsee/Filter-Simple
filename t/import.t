@@ -1,5 +1,5 @@
 BEGIN {
-    unshift @INC, 't/lib';
+    unshift @INC, './t/lib';
 }
 
 BEGIN { print "1..4\n" }
