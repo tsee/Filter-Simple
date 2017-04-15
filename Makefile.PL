@@ -10,6 +10,7 @@ WriteMakefile(
   (ABSTRACT_FROM => 'lib/Filter/Simple.pm',
    'AUTHOR'      => 'Damian Conway') : ()),
   PREREQ_PM     => {
+    'parent'    => 0, # needed for the tests on 5.8.x only, otherwise core anyway
     'Text::Balanced' => '1.97',
     'Filter::Util::Call' => 0
   },
