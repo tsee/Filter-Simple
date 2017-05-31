@@ -1,0 +1,27 @@
+---
+abstract: 'Simplified source filtering'
+author:
+  - 'Damian Conway'
+build_requires:
+  ExtUtils::MakeMaker: '0'
+configure_requires:
+  ExtUtils::MakeMaker: '0'
+dynamic_config: 0
+generated_by: 'ExtUtils::MakeMaker version 7.24, CPAN::Meta::Converter version 2.143240'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: '1.4'
+name: Filter-Simple
+no_index:
+  directory:
+    - t
+    - inc
+requires:
+  Filter::Util::Call: '0'
+  Text::Balanced: '1.97'
+  parent: '0'
+resources:
+  repository: git://github.com/tsee/Filter-Simple.git
+version: 0.92_01
+x_static_install: 1

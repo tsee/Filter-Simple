@@ -3,7 +3,7 @@
 \.gitignore$
 \.travis.yml$
 
-\b(?:MY)?META\.(?:json|yml)$
+\bMYMETA\.(?:json|yml)$
 # Default section:
 # Avoid version control files.
 \bRCS\b
@@ -32,3 +32,5 @@
 \b\.#
 \b\..*\.sw[op]$
 
+# Avoid by-products of "make dist"
+^Filter-Simple-
