@@ -8,4 +8,4 @@ blib/
 pm_to_blib
 *.o
 MYMETA.*
-META.*
+Filter-Simple-*
