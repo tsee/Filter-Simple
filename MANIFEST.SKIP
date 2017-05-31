@@ -2,6 +2,7 @@
 \.git/
 \.gitignore$
 \.travis.yml$
+\.releaserc$
 
 \bMYMETA\.(?:json|yml)$
 # Default section:
