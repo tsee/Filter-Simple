@@ -24,15 +24,20 @@ demo/DotsForArrows.pm
 lib/Filter/Simple.pm
 Makefile.PL
 MANIFEST			This list of files
+META.json
+META.yml
 README
 t/code_no_comments.t
 t/data.t
 t/export.t
 t/filter.t
 t/filter_only.t
+t/heredoc_inline_linenumbers.t
+t/heredoc_inline_linenumbers_single.t
 t/import.t
 t/lib/Filter/Simple/CodeNoComments.pm
 t/lib/Filter/Simple/ExportTest.pm
 t/lib/Filter/Simple/FilterOnlyTest.pm
 t/lib/Filter/Simple/FilterTest.pm
 t/lib/Filter/Simple/ImportTest.pm
+t/lib/Filter/Simple/null.pm
