@@ -31,6 +31,7 @@ t/code_no_comments.t
 t/data.t
 t/export.t
 t/filter.t
+t/filter_no_newlines.t
 t/filter_only.t
 t/heredoc_inline_linenumbers.t
 t/heredoc_inline_linenumbers_single.t
