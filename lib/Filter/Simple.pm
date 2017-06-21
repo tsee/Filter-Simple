@@ -159,7 +159,7 @@ sub gen_std_filter_for {
                 # single-quoted],<<EOM);
                 # EOM
             my @following_lines;
-            my $whole_line = qr/((?:[^$;\r\n]+|$;....$;)*$nl)/s;
+            my $whole_line = qr/((?:[^$;\r\n]+|$;....$;)*(?:$nl|\z))/s;
             @res = map {
                        if( ! defined ) {
                            ''
@@ -192,7 +192,6 @@ sub gen_std_filter_for {
                            $_
                        };
                    } /$whole_line/g;
-
 
             $_ = join "", @res;
         }
