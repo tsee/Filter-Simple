@@ -13,4 +13,14 @@ WriteMakefile(
     'Text::Balanced' => '1.97',
     'Filter::Util::Call' => 0
   },
+  META_MERGE => {
+      'meta-spec' => { version => 2 },
+      resources => {
+          repository => {
+              type => 'git',
+              url => 'https://github.com/tsee/Filter-Simple.git',
+              web => 'https://github.com/tsee/Filter-Simple',
+          },
+      },
+  },
 );
